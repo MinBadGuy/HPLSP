@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 {
     if (argc <= 3)
     {
-        printf("usage: %s ip_address port_number\n", basename(argv[0]));
+        printf("usage: %s ip_address port_number recv_buffer_size\n", basename(argv[0]));
         return 1;
     }
 
@@ -27,6 +27,7 @@ int main(int argc, char* argv[])
     inet_pton(AF_INET, ip, &address.sin_addr);
     address.sin_port = htons(port);
 
+    // 接收端socket
     int sock = socket(PF_INET, SOCK_STREAM, 0);
     assert(sock >= 0);
 
@@ -37,9 +38,11 @@ int main(int argc, char* argv[])
     getsockopt(sock, SOL_SOCKET, SO_RCVBUF, &recvbuf, (socklen_t*)&len);
     printf("the tcp receive buffer size after setting is %d\n", recvbuf);
 
+    // 接收端socket绑定具体的socket地址
     int ret = bind(sock, (struct sockaddr*)&address, sizeof(address));
     assert(ret != -1);
 
+    // 接收端socket开启监听
     ret = listen(sock, 5);
     assert(ret != -1);
 
@@ -58,10 +61,10 @@ int main(int argc, char* argv[])
         {
             /* code */
         }
-
         close(connfd);
     }
 
     close(sock);
+
     return 0;
 }

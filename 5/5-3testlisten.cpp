@@ -10,7 +10,9 @@
 
 static bool stop = false;
 
-/* SIGTERM信号的处理函数，触发时结束主程序中的循环 */
+/**
+ * @brief: SIGTERM信号的处理函数，触发时结束主程序中的循环
+ */
 static void handle_term(int sig)
 {
     stop = true;
@@ -30,32 +32,32 @@ int main(int argc, char* argv[])
     int port = atoi(argv[2]);                       // Convert a string to an integer
     int backlog = atoi(argv[3]);
 
-    /* 创建一个IPv4 TCP套接字 */
-    int sock = socket(PF_INET, SOCK_STREAM, 0);     // 协议族：PF_INET，流服务：SOCK_STREAM
+    /* 1. 创建一个IPv4 TCP套接字 */
+    int sock = socket(PF_INET, SOCK_STREAM, 0);     // 协议族：PF_INET，流服务：SOCK_STREAM (TCP连接)
     assert(sock >= 0);
 
-    /* 创建一个IPv4 socket地址 */
+    // 创建一个IPv4 socket地址
     struct sockaddr_in address;
-    bzero(&address, sizeof(address));
+    bzero(&address, sizeof(address));               // 初始化设置为0
     address.sin_family = AF_INET;                   // 地址族：AF_INET
     inet_pton(AF_INET, ip, &address.sin_addr);      // IP地址转换：点分十进制字符串IP地址转成网络字节序整数格式
-    address.sin_port = htons(port);                 // htons：将一个无符号短整型数值从主机字节序转换为网络字节序，即大端模式(big-endian)
+    address.sin_port = htons(port);                 // htons：将一个无符号短整型数值从主机字节序转换为网络字节序，即转为u大端模式(big-endian)
 
-    /* 将socket与socket地址绑定 */
-    int ret = bind(sock, (const sockaddr*)&address, sizeof(address));   // 强制转换成通用的socket地址类型sockaddr
+    /* 2. 将socket与socket地址绑定 */
+    int ret = bind(sock, (const sockaddr*)&address, sizeof(address));   // 强制转换成通用的socket地址类型sockaddr*
     assert(ret != -1);
 
-    /* 监听socket */
+    /* 3. 监听socket */
     ret = listen(sock, 5);
     assert(ret != -1);
 
-    /* 循环等待连接，直到有SIGTERM信号将它中断 */
+    // 循环等待连接，直到有SIGTERM信号将它中断
     while (!stop)
     {
        sleep(1);
     }
 
-    /* 关闭socket */
+    /* 4. 关闭socket */
     close(sock);
     return 0;
 }

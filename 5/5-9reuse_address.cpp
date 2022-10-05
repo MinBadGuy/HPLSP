@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     const char* ip = argv[1];
     int port = atoi(argv[2]);
 
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(PF_INET, SOCK_STREAM, 0);
     assert(sock >= 0);
 
     /* 设置socket选项SO_REUSEADDR来强制使用被处于TIME_WAIT状态的连接占用的socket地址 */
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 
     struct sockaddr_in client;
     socklen_t client_addrlength = sizeof(client);
-    int connfd = accept(sock, (struct sockaddr*)&client, &client_addrlength);
+    int connfd = accept(sock, (struct sockaddr*)&client, &client_addrlength);   // 被动接受连接
     if (connfd < 0)
     {
         printf("errno is %d\n", errno);
@@ -55,5 +55,6 @@ int main(int argc, char* argv[])
     }
 
     close(sock);
+    
     return 0;
 }

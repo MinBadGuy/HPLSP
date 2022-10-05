@@ -38,11 +38,12 @@ int main(int argc, char* argv[])
     {
         const char* oob_data = "abc";
         const char* normal_data = "123";
-        send(sockfd, normal_data, strlen(normal_data), 0);  // 将normal_data处的数据发向socket
+        send(sockfd, normal_data, strlen(normal_data), 0);  // 将normal_data处的数据发向客户端socket
         send(sockfd, oob_data, strlen(oob_data), MSG_OOB);
         send(sockfd, normal_data, strlen(normal_data), 0);
     }
 
     close(sockfd);
+    
     return 0;
 }

@@ -1,6 +1,8 @@
 #include<stdio.h>
 
-/* 判断机器字节序 */
+/**
+ * @brief: 判断机器字节序
+ */
 void byteorder()
 {
 	union
@@ -11,7 +13,7 @@ void byteorder()
 	
 	test.value = 0x0102;
 
-	if ((test.union_bytes[0] == 1) &&(test.union_bytes[1] == 2))		// 大端字节序：低地址存放高位字节
+	if ((test.union_bytes[0] == 1) && (test.union_bytes[1] == 2))		// 大端字节序：低地址存放高位字节
 	{
 		printf("big endian\n");
 	}

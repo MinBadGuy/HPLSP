@@ -19,13 +19,13 @@ int main(int argc, char* argv[])
     const char* ip = argv[1];
     int port = atoi(argv[2]);
 
-    // 服务端的socket地址
+    // 服务端(接收端)的socket地址
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
     inet_pton(AF_INET, ip, &server_address.sin_addr);
     server_address.sin_port = htons(port);
 
-    // 客户端socket
+    // 发送端socket
     int sock = socket(PF_INET, SOCK_STREAM, 0);
     assert(sock >= 0);
 
@@ -39,11 +39,12 @@ int main(int argc, char* argv[])
     // 客户端主动发起连接
     if (connect(sock, (struct sockaddr*)&server_address, sizeof(server_address)) != -1)
     {
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE]; 
         memset(buffer, '\0', BUFFER_SIZE);
         send(sock, buffer, BUFFER_SIZE, 0);
     }
 
     close(sock);
+
     return 0;
 }

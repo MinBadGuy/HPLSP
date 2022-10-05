@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     address.sin_addr = *(in_addr*)*(hostinfo->h_addr_list);
 
     int sockfd = socket(PF_INET, SOCK_STREAM, 0);
-    int result = connect(sockfd, (struct sockaddr*)&address, sizeof(address));
+    int result = connect(sockfd, (struct sockaddr*)&address, sizeof(address));  // 主动连接
     assert(result != -1);
 
     char buffer[128];
