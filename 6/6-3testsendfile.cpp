@@ -29,31 +29,35 @@ int main(int argc, char* argv[])
     struct stat stat_buf;
     fstat(filefd, &stat_buf);
 
+    // socket地址
     struct sockaddr_in address;
     bzero(&address, sizeof(address));
     address.sin_family = AF_INET;
     inet_pton(AF_INET, ip, &address.sin_addr);
     address.sin_port = htons(port);
     
+    // 创建socket
     int sock = socket(PF_INET, SOCK_STREAM, 0);
     assert(sock >= 0);
 
+    // socket绑定具体体制
     int ret = bind(sock, (struct sockaddr*)&address, sizeof(address));
     assert(ret != -1);
 
+    // 监听socket
     ret = listen(sock, 5);
     assert(ret != -1);
 
     struct sockaddr_in client;
     socklen_t client_addrlength = sizeof(client);
-    int connfd = accept(sock, (struct sockaddr*)&client, &client_addrlength);
+    int connfd = accept(sock, (struct sockaddr*)&client, &client_addrlength);   // 被动连接
     if (connfd < 0)
     {
         printf("errno is: %d\n", errno);
     }
     else
     {
-        sendfile(connfd, filefd, NULL, stat_buf.st_size);
+        sendfile(connfd, filefd, NULL, stat_buf.st_size);   // 将filefd里的内容发送至connfd
         close(connfd);
     }
 

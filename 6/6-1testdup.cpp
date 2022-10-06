@@ -19,24 +19,24 @@ int main(int argc, char* argv[])
     const char* ip = argv[1];
     int port = atoi(argv[2]);
 
-    struct sockaddr_in address;
+    struct sockaddr_in address;     // socket地址
     bzero(&address, sizeof(address));
     address.sin_family = AF_INET;
     inet_pton(AF_INET, ip, &address.sin_addr);
     address.sin_port = htons(port);
 
-    int sock = socket(PF_INET, SOCK_STREAM, 0);
+    int sock = socket(PF_INET, SOCK_STREAM, 0);     // 创建socket
     assert(sock >= 0);
 
-    int ret = bind(sock, (struct sockaddr*)&address, sizeof(address));
+    int ret = bind(sock, (struct sockaddr*)&address, sizeof(address));  // socket绑定具体地址
     assert(ret != -1);
 
-    ret = listen(sock, 5);
+    ret = listen(sock, 5);  // 监听socket
     assert(ret != -1);
 
     struct sockaddr_in client;
     socklen_t client_addrlength = sizeof(client);
-    int connfd = accept(sock, (struct sockaddr*)&client, &client_addrlength);
+    int connfd = accept(sock, (struct sockaddr*)&client, &client_addrlength);   // 被动连接，返回一个连接描述符
     if (connfd < 0)
     {
         printf("errno is: %d\n", errno);

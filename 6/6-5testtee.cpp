@@ -24,15 +24,15 @@ int main(int argc, char* argv[])
     ret = pipe(pipefd_file);
     assert(ret != -1);
 
-    /* 将标准输入内容输入管道pipefd_stdout */
+    /* 将标准输入内容输入管道pipefd_stdout的输入端  STDIN_FILENO->pipefd_stdout[1] */
     ret = splice(STDIN_FILENO, NULL, pipefd_stdout[1], NULL, 32768, SPLICE_F_MORE | SPLICE_F_MOVE);
     assert(ret != -1);
 
-    /* 将管道pipefd_stdout的输出复制到管道piped_file的输入端 */
+    /* 将管道pipefd_stdout的输出复制到管道piped_file的输入端    pipefd_stdout[0]->pipefd_file[1] */
     ret = tee(pipefd_stdout[0], pipefd_file[1], 32768, SPLICE_F_NONBLOCK);
     assert(ret != -1);
 
-    /* 将管道pipefd_file的输出定向到文件描述符filefd上，从而将标准输入的内容写入文件 */
+    /* 将管道pipefd_file的输出定向到文件描述符filefd上，从而将标准输入的内容写入文件    pipefd_file[0]->filefd */
     ret = splice(pipefd_file[0], NULL, filefd, NULL, 32768, SPLICE_F_MORE | SPLICE_F_MOVE);
     assert(ret != -1);
 
