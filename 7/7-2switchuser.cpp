@@ -1,6 +1,12 @@
 #include <unistd.h>
 #include <stdio.h>
 
+/**
+ * @brief: 将root身份启动的进程切换为一个以普通用户身份运行
+ * @param user_id: 用户id
+ * @param gp_id: 组id
+ * @return: true or false
+*/
 static bool switch_to_user(uid_t user_id, gid_t gp_id)
 {
     /* 先确保目标用户不是root */

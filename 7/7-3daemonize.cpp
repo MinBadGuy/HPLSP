@@ -4,15 +4,24 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+/**
+ * @brief: 将服务器程序以守护进程的方式运行
+*/
 bool daemonize()
 {
     /* 创建子进程，关闭父进程，这样可以使程序在后台运行 */
+    /**
+     * fork()返回值
+     * 发生错误：-1
+     * 返回给子进程：0
+     * 返回给父进程：子进程pid
+    */
     pid_t pid = fork();
     if (pid < 0)
     {
         return false;
     }
-    else if (pid > 0)
+    else if (pid > 0)   // 关闭父进程
     {
         exit(0);
     }
