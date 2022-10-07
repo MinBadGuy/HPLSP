@@ -182,6 +182,7 @@ HTTP_CODE parse_content(char* buffer, int& checked_index, CHECK_STATE& checkstat
 	while ((linestatus = parse_line(buffer, checked_index, read_index)) == LINE_OK)
 	{
 		char* temp = buffer + start_line;
+		printf("temp: %s\n", temp);
 		start_line = checked_index;	// 记录下一行的起始位置
 
 		switch (checkstate)
