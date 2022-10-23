@@ -64,7 +64,8 @@ int main(int argc, char* argv[])
     assert(ret != -1);
 
     /* 创建users数组，分配FD_LIMIT个client_data对象。
-       可以预期：每个可能的socket连接都可以获得一个这样的对象，并且socket的值可以直接用来索引（作为数组的下标）socket连接对应的client_data对象，
+       可以预期：每个可能的socket连接都可以获得一个这样的对象，
+       并且socket的值可以直接用来索引（作为数组的下标）socket连接对应的client_data对象，
        这是将socket和客户数据关联的简单而高效的方式
     */
     client_data* users = new client_data[FD_LIMIT];
@@ -91,7 +92,7 @@ int main(int argc, char* argv[])
 
         for (int i = 0; i < user_counter + 1; i++)
         {
-            if ((fds[i].fd == listenfd) && fds[i].revents & POLLIN)
+            if ((fds[i].fd == listenfd) && (fds[i].revents & POLLIN)) // 如果是监听socket，并且有新的连接请求
             {
                 struct sockaddr_in client_address;
                 socklen_t client_addrlength = sizeof(client_address);
@@ -121,7 +122,7 @@ int main(int argc, char* argv[])
                 fds[user_counter].revents = 0;
                 printf("comes a new user, now have %d users\n", user_counter);
             }
-            else if (fds[i].revents & POLLERR)
+            else if (fds[i].revents & POLLERR)  // 如果socket上发生错误
             {
                 printf("get an error from %d\n", fds[i].fd);
                 char errors[100];
@@ -135,8 +136,8 @@ int main(int argc, char* argv[])
             }
             else if (fds[i].revents & POLLRDHUP)
             {
-                /* 如果客户关闭端关闭连接，则服务器也关闭对应的连接，并将用户总数减1 */
-                users[fds[i].fd] = users[fds[user_counter].fd];
+                /* 如果客户端关闭连接，则服务器也关闭对应的连接，并将用户总数减1 */
+                users[fds[i].fd] = users[fds[user_counter].fd]; // 将最后一个用户往前移
                 close(fds[i].fd);
                 fds[i] = fds[user_counter];
                 i--;
@@ -147,7 +148,7 @@ int main(int argc, char* argv[])
             {
                 int connfd = fds[i].fd;
                 memset(users[connfd].buf, '\0', BUFFER_SIZE);
-                ret = recv(connfd, users[connfd].buf, BUFFER_SIZE - 1, 0);
+                ret = recv(connfd, users[connfd].buf, BUFFER_SIZE - 1, 0);  // 接收用户数据
                 printf("get %d bytes of client data %s from %d\n", ret, users[connfd].buf, connfd);
                 if (ret < 0)
                 {
@@ -190,7 +191,7 @@ int main(int argc, char* argv[])
                ret = send(connfd, users[connfd].write_buf, strlen(users[connfd].write_buf), 0);
                users[connfd].write_buf = NULL;
                /* 写完数据后需要重新注册fds[i]上的可读事件 */
-               fds[i].events != ~POLLIN;
+               fds[i].events |= ~POLLOUT;
                fds[i].events |= POLLIN;
             }  
         }

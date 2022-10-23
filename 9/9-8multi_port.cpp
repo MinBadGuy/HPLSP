@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
     bzero(&address, sizeof(address));
     address.sin_family = AF_INET;
     inet_pton(AF_INET, ip, &address.sin_addr);
-    address.sin_port = htons(port);
+    address.sin_port = htons(port);             // UDP与TCP使用相同的ip和端口号
     int udpfd = socket(PF_INET, SOCK_DGRAM, 0);
     assert(udpfd > 0);
 
@@ -102,29 +102,30 @@ int main(int argc, char* argv[])
         for (int i = 0; i < number; i++)
         {
             int sockfd = events[i].data.fd;
-            if (sockfd == listenfd)
+            if (sockfd == listenfd) // listenfd
             {
                 struct sockaddr_in client_address;
                 socklen_t client_addrlength = sizeof(client_address);
                 int connfd = accept(listenfd, (sockaddr*)&client_address, &client_addrlength);
                 addfd(epollfd, connfd);
             }
-            else if (sockfd == udpfd)
+            else if (sockfd == udpfd)   // udpfd
             {
+                printf("UDP packet\n");
                 char buf[UDP_BUFFER_SIZE];
                 memset(buf, '\0', UDP_BUFFER_SIZE);
                 struct sockaddr_in client_address;
                 socklen_t client_addrlength = sizeof(client_address);
-
+                /* 接收并回发数据 */
                 ret = recvfrom(udpfd, buf, UDP_BUFFER_SIZE - 1, 0, (sockaddr*)&client_address, &client_addrlength);
                 if (ret > 0)
                 {
                     sendto(udpfd, buf, UDP_BUFFER_SIZE - 1, 0, (sockaddr*)&client_address, client_addrlength);
                 }
-                
             }
-            else if (events[i].events & EPOLLIN)
+            else if (events[i].events & EPOLLIN)    // TCP socket，即110行注册的socket
             {
+                printf("TCP packet\n");
                 char buf[TCP_BUFFER_SIZE];
                 while (1)
                 {

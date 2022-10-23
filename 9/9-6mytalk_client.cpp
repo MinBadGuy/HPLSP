@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
     fds[0].events = POLLIN; // 数据可读
     fds[0].revents = 0;
     fds[1].fd = sockfd;
-    fds[1].events = POLLIN | POLLRDHUP; // 数据可读 | TCP连接被对方关闭，或者对方关闭了写操作
+    fds[1].events = POLLIN | POLLRDHUP; // 数据可读 | TCP连接被对方关闭，或者对方关闭了写操作   p151
     fds[1].revents = 0;
 
     char read_buf[BUFFER_SIZE];
@@ -76,12 +76,11 @@ int main(int argc, char* argv[])
 
         if (fds[0].revents & POLLIN)
         {
-            /* 使用splice将用户输入的数据直接写到sockfd上（零拷贝）*/
+            /* 使用splice将用户输入的数据直接写到sockfd上（零拷贝）*/   // p108
             ret = splice(0, NULL, pipefd[1], NULL, 32768, SPLICE_F_MORE | SPLICE_F_MOVE);       // 0 -> pipefd
             ret = splice(pipefd[0], NULL, sockfd, NULL, 32768, SPLICE_F_MORE | SPLICE_F_MOVE);  // pipefd -> sockfd
         }
-        
-        close(sockfd);
-        return 0;
     }
+    close(sockfd);
+    return 0;
 }

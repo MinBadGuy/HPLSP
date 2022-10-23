@@ -44,8 +44,9 @@ int unblock_connect(const char* ip, int port, int time)
     address.sin_port = htons(port);
 
     int sockfd = socket(PF_INET, SOCK_STREAM, 0);
+    printf("sockfd: %d\n", sockfd);
     int fdopt = setnonblocking(sockfd);
-    ret = connect(sockfd, (sockaddr*)&address, sizeof(address));
+    ret = connect(sockfd, (sockaddr*)&address, sizeof(address));    // 主动连接
     if (ret == 0)
     {
         /* 如果连接成功，则恢复sockfd的属性，并立即返回之 */
@@ -59,6 +60,7 @@ int unblock_connect(const char* ip, int port, int time)
         printf("unblock connect not support\n");
         return -1;
     }
+    printf("ret: %d\t, errno: %d\n", ret, errno);   // ret总是等于-1，即非阻塞的socket执行connect操作始终失败
 
     fd_set readfds;
     fd_set writefds;
@@ -85,7 +87,7 @@ int unblock_connect(const char* ip, int port, int time)
     
     int error = 0;
     socklen_t length = sizeof(error);
-    /* 调用getsockopt来获取并清除sockfd上的错误 */
+    /* 调用getsockopt来获取并清除sockfd上的错误 */  // p87
     if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &length) < 0)
     {
         printf("get socket option failed\n");

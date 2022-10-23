@@ -16,15 +16,15 @@
 #define BUFFER_SIZE 10
 
 /**
- * @brief: 将文件描述符fd设置成非阻塞的
+ * @brief: 将文件描述符fd设置成非阻塞的（非阻塞：如果等待的事件未准备好，系统调用会立即返回并设置errno而不是导致调用进程被挂起，不会导致进程的切换）
  * @param fd: 文件描述符fd
  * @return: 文件描述符fd原来的状态标志
 */
 int setnonblocking(int fd)
 {
-    int old_option = fcntl(fd, F_GETFL);    // 获取文件描述符当前状态标志
-    int new_option = old_option | O_NONBLOCK;
-    fcntl(fd, F_SETFL, new_option);
+    int old_option = fcntl(fd, F_GETFL);        // 获取文件描述符当前状态标志
+    int new_option = old_option | O_NONBLOCK;   // 增加非阻塞状态
+    fcntl(fd, F_SETFL, new_option);             // 设置文件描述符的状态标志
     return old_option;
 }
 
@@ -59,18 +59,20 @@ void addfd(int epollfd, int fd, bool enable_et)
 */
 void lt(epoll_event* events, int number, int epollfd, int listenfd)
 {
+    printf("listenfd: %d\n", listenfd);
     char buf[BUFFER_SIZE];
     for (int i = 0; i < number; i++)
     {
         int sockfd = events[i].data.fd;
-        if (sockfd == listenfd)
+        printf("sockfd: %d\n", sockfd);
+        if (sockfd == listenfd) // 如果sockfd是被监听的文件描述符
         {
             struct sockaddr_in client_address;
             socklen_t client_addrlength = sizeof(client_address);
-            int connfd = accept(sockfd, (struct sockaddr*)&client_address, &client_addrlength);
-            addfd(epollfd, sockfd, false);  // 对connfd禁用ET模式
+            int connfd = accept(sockfd, (struct sockaddr*)&client_address, &client_addrlength); // 建立新的连接
+            addfd(epollfd, connfd, false);  // 对connfd禁用ET模式
         }
-        else if (events[i].events & EPOLLIN)
+        else if (events[i].events & EPOLLIN)    // 如果sockfd上发生可读事件
         {
             /* 只要socket读缓存中还有未读出的数据，这段代码就被触发 */
             printf("event trigger once\n");
@@ -91,8 +93,8 @@ void lt(epoll_event* events, int number, int epollfd, int listenfd)
 }
 
 /**
- * @brief: LT模式的工作流程
- * @param events: 事件数组
+ * @brief: ET模式的工作流程
+ * @param events: 就绪的事件数组
  * @param number: 数组长度
  * @param epollfd: 内核事件表
  * @param listenfd: 监听的socket
@@ -100,10 +102,12 @@ void lt(epoll_event* events, int number, int epollfd, int listenfd)
 */
 void et(epoll_event* events, int number, int epollfd, int listenfd)
 {
+    printf("listenfd: %d\n", listenfd);
     char buf[BUFFER_SIZE];
     for (int i = 0; i < number; i++)
     {
         int sockfd = events[i].data.fd;
+        printf("sockfd: %d\n", sockfd);
         if (sockfd == listenfd)
         {
             struct sockaddr_in client_address;
@@ -119,11 +123,14 @@ void et(epoll_event* events, int number, int epollfd, int listenfd)
             {
                 memset(buf, '\0', BUFFER_SIZE);
                 int ret = recv(sockfd, buf, BUFFER_SIZE - 1, 0);
-                if (ret < 0)
+                if (ret < 0)    // -1
                 {   
                     /* 对于非阻塞IO，下面的条件成立表示数据已经全部读取完毕。
-                    此后，epoll就能再次触发sockfd上的EPOLLIN事件，以驱动下一次读操作 */
-                    if ((errno == EAGAIN) || (errno == EWOULDBLOCK))
+                        此后，epoll就能再次触发sockfd上的EPOLLIN事件，以驱动下一次读操作 
+                        EAGAIN：Try again
+                        EWOULDBLOCK：Operation would block
+                    */
+                    if ((errno == EAGAIN) || (errno == EWOULDBLOCK))    
                     {
                         printf("read later\n");
                         break;
@@ -164,13 +171,13 @@ int main(int argc, char* argv[])
     address.sin_family = AF_INET;
     inet_pton(AF_INET, ip, &address.sin_addr);
     address.sin_port = htons(port);
-
+    
     int listenfd = socket(PF_INET, SOCK_STREAM, 0);
     assert(listenfd >= 0);
 
     ret = bind(listenfd, (sockaddr*)&address, sizeof(address));
     assert(ret != -1);
-
+    
     ret = listen(listenfd, 5);
     assert(ret != -1);
 
@@ -178,7 +185,7 @@ int main(int argc, char* argv[])
     int epollfd = epoll_create(5);  // 内核事件表
     assert(epollfd != -1);
     addfd(epollfd, listenfd, true);
-
+    
     while (1)
     {
         int ret = epoll_wait(epollfd, events, MAX_EVENT_NUMBER, -1);
@@ -187,6 +194,11 @@ int main(int argc, char* argv[])
             printf("epoll failure\n");
             break;
         }
+        else
+        {
+            printf("ret: %d\n", ret);
+        }
+        
         
         lt(events, ret, epollfd, listenfd);     // 使用LT模式
         // et(events, ret, epollfd, listenfd);     // 使用ET模式
