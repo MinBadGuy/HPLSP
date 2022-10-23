@@ -14,7 +14,7 @@
 #include <pthread.h>
 
 #define MAX_EVENT_NUMBER 1024
-static int pipefd[2];
+static int pipefd[2];   // 管道
 
 /**
  * @brief: 将文件描述符fd设置成非阻塞的
@@ -84,15 +84,18 @@ int main(int argc, char* argv[])
     int port = atoi(argv[2]);
 
     int ret = 0;
+    // socket地址
     struct sockaddr_in address;
     bzero(&address, sizeof(address));
     address.sin_family = AF_INET;
     inet_pton(AF_INET, ip, &address.sin_addr);
     address.sin_port = htons(port);
 
+    // 1. 创建监听socket
     int listenfd = socket(PF_INET, SOCK_STREAM, 0);
     assert(listenfd >= 0);
 
+    // 2. 将监听socket绑定至具体的地址
     ret = bind(listenfd, (const sockaddr*)&address, sizeof(address));
     if (ret == -1)
     {
@@ -100,21 +103,26 @@ int main(int argc, char* argv[])
         return 1;
     }
     
+    // 3. 监听socket
     ret = listen(listenfd, 5);
     assert(ret != -1);
 
     epoll_event events[MAX_EVENT_NUMBER];
-    int epollfd = epoll_create(5);
+    int epollfd = epoll_create(5);  // 内核事件表文件描述符
     assert(epollfd != -1);
-    addfd(epollfd, listenfd);
-
+    addfd(epollfd, listenfd);   // 将监听socket注册至内核事件表
+#if 0
     // 使用socketpair创建管道，注册pipefd[0]上的可读事件
-    ret = socketpair(PF_INET, SOCK_STREAM, 0, pipefd);
+    ret = socketpair(PF_INET, SOCK_STREAM, 0, pipefd);  // ？一直返回-1
+#endif
+    ret = pipe(pipefd);
+    // printf("ret = %d\n", ret);
     assert(ret != -1);
+
     setnonblocking(pipefd[1]);
     addfd(epollfd, pipefd[0]);
 
-    // 设置一些信号处理函数
+    // 设置一些信号处理函数 p179
     addsig(SIGHUP);
     addsig(SIGCHLD);
     addsig(SIGTERM);
@@ -133,7 +141,7 @@ int main(int argc, char* argv[])
         for (int i = 0; i < number; i++)
         {
             int sockfd = events[i].data.fd;
-            // 如果就绪的文件描述符时listenfd，则处理新的连接
+            // 如果就绪的文件描述符是listenfd，则处理新的连接
             if (sockfd == listenfd)
             {
                 struct sockaddr_in client_address;
@@ -170,7 +178,7 @@ int main(int argc, char* argv[])
                             case SIGTERM:
                             case SIGINT:
                             {
-                                stop_server = true;
+                                stop_server = true; // 测试现象：输入ctrl+c后未结束，输入ctrl+z后退出了，但ps发现进程还在
                             }
                         }
                     }    

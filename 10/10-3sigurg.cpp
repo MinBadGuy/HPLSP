@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        addsig(SIGURG, sig_urg);
+        addsig(SIGURG, sig_urg);    // 设置SIGURG的信号处理函数
         // 使用SIGURG前，必须设置socket的宿主进程或进程组
         fcntl(connfd, F_SETOWN, getpid());
 
