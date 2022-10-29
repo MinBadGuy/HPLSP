@@ -9,7 +9,9 @@
 void sig_handler(int sig)
 {
     int save_errno = errno;
-    printf("get signal: %d\n", sig);
+    printf("start process signal: %d\n", sig);
+    sleep(5);
+    printf("end process\n");
     errno = save_errno;
 }
 
@@ -20,6 +22,12 @@ void addsig(int sig)
     memset(&sa, '\0', sizeof(sa));
     sa.sa_handler = sig_handler;
     sa.sa_flags |= SA_RESTART;
+    /*
+        sigfillset(&sa.sa_mask)的作用是：在信号处理函数执行过程中，屏蔽所有信号
+        （1）如果执行过程中，接收到其他信号，则把它先挂起，等此处理函数执行完毕再去处理接收到的信号
+        （2）如果执行过程中多次接收到同一个信号，处理函数执行完毕后只去处理接收到的信号一次
+        可在本程序代码触发一次的sleep的5s期间验证这两点
+    */ 
     sigfillset(&sa.sa_mask);
     assert(sigaction(sig, &sa, NULL) != -1);
 }
