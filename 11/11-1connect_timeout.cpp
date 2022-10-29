@@ -12,20 +12,22 @@
 
 /**
  * @brief: 超时连接函数
- * @param ip:
- * @param port:
- * @param time:
+ * @param ip: 目标ip地址
+ * @param port: 目标端口号
+ * @param time: 超时时间，单位为秒
  * @return:
 */
 int timeout_connect(const char* ip, int port, int time)
 {
     int ret;
+    // 目标socket地址
     struct sockaddr_in address;
     bzero(&address, sizeof(address));
     address.sin_family = AF_INET;
     inet_pton(AF_INET, ip, &address.sin_addr);
     address.sin_port = htons(port);
 
+    // 创建socket
     int sockfd = socket(PF_INET, SOCK_STREAM, 0);
     assert(sockfd >= 0);
     /* 通过选项SO_RCVTIMEO和SO_SNDTIMEO所设置的超时时间的类型是timeval，这和select系统调用的超时参数类型相同 */
@@ -36,6 +38,7 @@ int timeout_connect(const char* ip, int port, int time)
     ret = setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, len);   // 设置sockfd发送数据的超时时间
     assert(ret != -1);
 
+    // 主动发起连接
     ret = connect(sockfd, (sockaddr*)&address, sizeof(address));
     if (ret == -1)
     {

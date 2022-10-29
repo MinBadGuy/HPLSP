@@ -22,7 +22,11 @@ static int pipefd[2];
 static sort_timer_lst timer_lst;
 static int epollfd = 0;
 
-
+/**
+ * @brief: 将文件描述符fd设置成非阻塞的
+ * @param fd: 文件描述符fd
+ * @return: 文件描述符fd原来的状态标志
+*/
 int setnonblocking(int fd)
 {
     int old_option = fcntl(fd, F_GETFL);
@@ -31,6 +35,12 @@ int setnonblocking(int fd)
     return old_option;
 }
 
+/**
+ * @brief: 将文件描述fd上的EPOLLIN和EPOLLET事件注册到epollfd指示的epoll内核事件表中
+ * @param epollfd: 内核事件表
+ * @param fd: 文件描述符
+ * @return: 
+*/
 void addfd(int epollfd, int fd)
 {
     epoll_event event;
@@ -40,14 +50,25 @@ void addfd(int epollfd, int fd)
     setnonblocking(fd);
 }
 
+/**
+ * @brief: 信号处理函数
+ * @param sig: 信号
+ * @return:
+*/
 void sig_handler(int sig)
 {
+    // 保留原来的errno，在函数最后恢复，以保证函数的可重入性
     int save_errno = errno;
     int msg = sig;
-    send(pipefd[1], (char*)&msg, 1, 0);
+    send(pipefd[1], (char*)&msg, 1, 0); // 将信号写入管道
     errno = save_errno;
 }
 
+/**
+ * @brief: 设置信号的处理函数
+ * @param sig: 信号
+ * @return:
+*/
 void addsig(int sig)
 {
     struct sigaction sa;
@@ -86,23 +107,27 @@ int main(int argc, char* argv[])
     int port = atoi(argv[2]);
 
     int ret = 0;
+    // 服务端socket地址
     struct sockaddr_in address;
     bzero(&address, sizeof(address));
     address.sin_family = AF_INET;
     inet_pton(AF_INET, ip, &address.sin_addr);
     address.sin_port = htons(port);
 
+    // 创建socket
     int listenfd = socket(PF_INET, SOCK_STREAM, 0);
     assert(listenfd >= 0);
 
+    // 将socket与相应的socket地址绑定
     ret = bind(listenfd, (sockaddr*)&address, sizeof(address));
     assert(ret != -1);
 
+    // 监听socket
     ret = listen(listenfd, 5);
     assert(ret != -1);
 
     epoll_event events[MAX_EVENT_NUMBER];
-    int epollfd = epoll_create(5);
+    int epollfd = epoll_create(5);  // 内核事件表文件描述符
     assert(epollfd != -1);
     addfd(epollfd, listenfd);
 
@@ -132,7 +157,7 @@ int main(int argc, char* argv[])
             {
                 struct sockaddr_in client_address;
                 socklen_t client_addrlength = sizeof(client_address);
-                int connfd = accept(listenfd, (sockaddr*)&client_address, &client_addrlength);
+                int connfd = accept(listenfd, (sockaddr*)&client_address, &client_addrlength);  // 接收客户端连接
                 addfd(epollfd, connfd);
                 users[connfd].address = client_address;
                 users[connfd].sockfd = connfd;
@@ -146,7 +171,7 @@ int main(int argc, char* argv[])
                 timer_lst.add_timer(timer);
             }
             /* 处理信号 */
-            else if ((sockfd == pipefd[0]) && (events[i].events & EPOLLIN))
+            else if ((sockfd == pipefd[0]) && (events[i].events & EPOLLIN)) // 管道中接收到信号
             {
                 int sig;
                 char signals[1024];
@@ -237,5 +262,5 @@ int main(int argc, char* argv[])
     close(pipefd[1]);
     close(pipefd[0]);
     delete[] users;
-    return -;
+    return -1;
 }

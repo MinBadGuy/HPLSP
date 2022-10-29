@@ -4,10 +4,12 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <time.h>
+
 #define BUFFER_SIZE 64
 
 class util_timer;    // 前向声明
 
+/* 用户数据结构：客户端socket地址、socket文件描述符、读缓存和定时器 */
 struct client_data
 {
     sockaddr_in address;
@@ -30,7 +32,7 @@ public:
     util_timer* next;               // 指向后一个定时器
 };
 
-/* 定时器链表 */
+/* 定时器链表。它是一个升序、双向链表，且带有头节点和尾节点 */
 class sort_timer_lst
 {
 public:
@@ -55,7 +57,8 @@ public:
         {
             return;
         }
-        if (!head)
+        /* 如果当前链表为空，则头节点和尾节点都指向该定时器 */
+        if (!head)  
         {
             head = tail = timer;
             return;
