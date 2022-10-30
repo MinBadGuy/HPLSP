@@ -1,9 +1,6 @@
 #include <sys/signal.h>
 #include <event.h>
 
-#include <event2/event_struct.h>
-
-
 void signal_cb(int fd, short event, void* argc)
 {
     struct event_base* base = (struct event_base*)argc;
