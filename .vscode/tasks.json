@@ -7,7 +7,7 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}", "-lpthread", "-levent",
+                "${file}", "-lpthread", "-levent", "-lrt",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],
